@@ -1,4 +1,4 @@
-package scanner
+package cardscanner
 
 const (
 	NRSTPD = 22
