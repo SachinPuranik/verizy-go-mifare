@@ -38,7 +38,7 @@ func main() {
 			}
 
 		case 2:
-			id, err := scanner.Scan()
+			id, err := Search(scanner)
 			if err != nil {
 				log.Println("Error reading card")
 			} else {
@@ -64,4 +64,34 @@ func main() {
 
 	}
 
+}
+
+//Search -
+func Search(scanner cardscanner.CardReaderIO) (string, error) {
+
+	var continueRead bool
+	continueRead = true
+
+	for continueRead == true {
+		_, err := scanner.RequestMode(cardscanner.PICC_REQIDL)
+
+		if err == nil {
+			log.Println("Card detected")
+			continueRead = false
+		}
+		// // Get the UID of the card with anti collision
+		// uid = ""
+		// uid , err := cardscanner.ReadWithAnticoll()
+		// if(err == nil){
+		// 	scanner.SelectTag(ui)
+		//	err := scanner.AuthanticateTag(ui)
+		// if err == nil{
+		//     scanner.Read(8)
+		//     scanner.StopCrypto1()
+		// } else{}
+		//     log.Println("Authentication error")
+		// }
+	}
+
+	return "Nothing", nil
 }
