@@ -68,6 +68,7 @@ func (c *Card) init() {
 
 	c.writeToDevice(TxAutoReg, 0x40)
 	c.writeToDevice(ModeReg, 0x3D)
+	c.AntennaOn()
 }
 
 //DeviceReset -
@@ -129,6 +130,19 @@ func (c *Card) readFromDevice(addr int) (byte, error) {
 		log.Println("readFromDevice :", err.Error())
 	}
 	return responseBytes[1], err
+}
+
+//AntennaOn -
+func (c *Card) AntennaOn() {
+	temp, _ := c.readFromDevice(TxControlReg)
+	if (temp & 0x03) == 0x00 {
+		c.setBitMask(TxControlReg, 0x03)
+	}
+}
+
+//AntennaOff -
+func (c *Card) AntennaOff() {
+	c.clearBitMask(TxControlReg, 0x03)
 }
 
 func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []byte, responseLen int, err error) {
