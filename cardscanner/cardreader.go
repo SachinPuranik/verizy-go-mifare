@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/ecc1/spi"
+	"github.com/warthog618/gpiod"
 )
 
 //Card -
@@ -16,6 +17,7 @@ type Card struct {
 	spiDevice     *spi.Device
 	speed         int
 	spiDeviceAddr string
+	chip          *gpiod.Chip
 }
 
 //CardReaderIO - Interface for Scanner
@@ -44,6 +46,33 @@ func (c *Card) Capture() error {
 		return err
 	}
 	return nil
+}
+
+func (c *Card) init() {
+
+	c.chip, _ = gpiod.NewChip("gpiochip0", gpiod.WithConsumer("softwire"))
+	c.chip.RequestLine(NRSTPD, gpiod.AsOutput(1))
+	// val, _ := in.Value()
+	// out, _ := c.RequestLine(3, gpiod.AsOutput(val))
+
+	// GPIO.setmode(GPIO.BOARD)
+	// GPIO.setup(self.NRSTPD, GPIO.OUT)
+	// GPIO.output(self.NRSTPD, 1)
+
+	c.DeviceReset()
+
+	c.writeToDevice(TModeReg, 0x8D)
+	c.writeToDevice(TPrescalerReg, 0x3E)
+	c.writeToDevice(TReloadRegL, 30)
+	c.writeToDevice(TReloadRegH, 0)
+
+	c.writeToDevice(TxAutoReg, 0x40)
+	c.writeToDevice(ModeReg, 0x3D)
+}
+
+//DeviceReset -
+func (c *Card) DeviceReset() {
+	c.writeToDevice(CommandReg, PCD_RESETPHASE)
 }
 
 //Release -
