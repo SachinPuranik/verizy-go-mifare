@@ -172,8 +172,12 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 	for {
 		n, _ = c.readFromDevice(CommandReg)
 		i = i - 1
-		//(i != 0) && ^(int(n) & 0x01) && ^(int(n) & waitIRq)
-		if ((i != 0) && (^(int(n) & 0x01)) > 0 && (^(int(n) & waitIRq)) > 0) == false {
+		log.Println("read Byte : ", n)
+		//if ~((i!=0) and ~(n&0x01) and ~(&waitIRqn)) (~(false)
+		//C1 - Break if i is 0 - evaulate expr false - hence false ==false break
+		//C2 - Break when last bit of n is 1 - evaulate expr false - hence false ==false break
+		//C3 - Break when 5th or 6th bit are 1 - evaulate expr false - hence false ==false break
+		if ((i != 0) && (int(n)&0x01) <= 0 && (int(n)&waitIRq) <= 0) == false {
 			log.Println("WIll break loop")
 			break
 		}

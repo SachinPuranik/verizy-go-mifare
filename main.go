@@ -78,6 +78,8 @@ func Search(scanner cardscanner.CardReaderIO) (string, error) {
 		if err == nil {
 			log.Println("Card detected")
 			continueRead = false
+		} else {
+			log.Println("Card RequestMode error :", err.Error())
 		}
 		// // Get the UID of the card with anti collision
 		// uid = ""
