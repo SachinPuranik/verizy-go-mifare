@@ -125,6 +125,9 @@ func (c *Card) clearBitMask(reg int, mask int) {
 
 func (c *Card) readFromDevice(addr int) (byte, error) {
 	responseBytes, err := c.writeToDevice(addr, 0)
+	if err != nil {
+		log.Println("readFromDevice :", err.Error())
+	}
 	return responseBytes[1], err
 }
 
@@ -170,7 +173,7 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 		n, _ = c.readFromDevice(CommandReg)
 		i = i - 1
 		//(i != 0) && ^(int(n) & 0x01) && ^(int(n) & waitIRq)
-		if (i != 0) && (^(int(n) & 0x01)) != 0 && (^(int(n) & waitIRq)) != 0 {
+		if ((i != 0) && (^(int(n) & 0x01)) > 0 && (^(int(n) & waitIRq)) > 0) == false {
 			log.Println("WIll break loop")
 			break
 		}
