@@ -155,8 +155,12 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 	c.setBitMask(FIFOLevelReg, 0x80)
 
 	c.writeToDevice(CommandReg, PCD_IDLE)
+
 	i := 0
+	log.Println("sendData Len :", len(sendData))
+
 	for i < len(sendData) {
+		log.Println("Sending byte :", sendData[i])
 		c.writeToDevice(FIFODataReg, int(sendData[i]))
 		i = i + 1
 	}
@@ -170,7 +174,7 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 	i = 2000
 	n := byte(0)
 	for {
-		n, _ = c.readFromDevice(CommandReg)
+		n, _ = c.readFromDevice(CommIrqReg)
 		i = i - 1
 		log.Println("read Byte : ", n)
 		//if ~((i!=0) and ~(n&0x01) and ~(&waitIRqn)) (~(false)
