@@ -171,6 +171,7 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 		i = i - 1
 		//(i != 0) && ^(int(n) & 0x01) && ^(int(n) & waitIRq)
 		if (i != 0) && (^(int(n) & 0x01)) != 0 && (^(int(n) & waitIRq)) != 0 {
+			log.Println("WIll break loop")
 			break
 		}
 	}
@@ -183,6 +184,7 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 			status = MI_OK
 
 			if int(n) != 0&irqEn&0x01 {
+				log.Println("MI_NOTAGERR")
 				status = MI_NOTAGERR
 			}
 
@@ -209,10 +211,13 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 				resp, _ := c.readFromDevice(FIFODataReg)
 				responseData = append(responseData, resp)
 				i = i + 1
+				log.Println("looping")
 			}
 		}
 	} else {
+
 		status = MI_ERR
+		log.Println("MI_ERR and i is 0")
 	}
 
 	if status != MI_OK {
