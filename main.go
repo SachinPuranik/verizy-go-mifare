@@ -73,6 +73,7 @@ func Search(scanner cardscanner.CardReaderIO) (string, error) {
 	continueRead = true
 
 	for continueRead == true {
+		log.Println("Starting card read")
 		_, err := scanner.RequestMode(cardscanner.PICC_REQIDL)
 
 		if err == nil {
