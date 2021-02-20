@@ -101,7 +101,7 @@ func (c *Card) Flash(data []byte) error {
 func (c *Card) writeToDevice(addr int, val int) (responseBytes []byte, err error) {
 	var outBuf []byte
 
-	log.Println("Addr:(",addr,")   val:(",val,")")
+	log.Println("Addr:(", addr, ")   val:(", val, ")")
 
 	responseBytes = nil
 
@@ -123,14 +123,31 @@ func (c *Card) setBitMask(reg int, mask int) {
 
 func (c *Card) clearBitMask(reg int, mask int) {
 	tmp, _ := c.readFromDevice(reg)
-	c.writeToDevice(reg, int(tmp)&^mask)
+	c.writeToDevice(reg, int(tmp)&(^mask))
 }
 
+// func (c *Card) readFromDevice(addr int) (byte, error) {
+// 	log.Println("Addr:(", addr, ")   val:(", 0, ")")
+// 	responseBytes, err := c.writeToDevice(addr, 0)
+// 	if err != nil {
+// 		log.Println("readFromDevice :", err.Error())
+// 	}
+// 	return responseBytes[1], err
+// }
+
 func (c *Card) readFromDevice(addr int) (byte, error) {
-	log.Println("Addr:(",addr,")   val:(",0,")")
-	responseBytes, err := c.writeToDevice(addr, 0)
-	if err != nil {
-		log.Println("readFromDevice :", err.Error())
+	var outBuf []byte
+	var responseBytes []byte
+
+	log.Println("Addr:(", addr, ")   val:(0)")
+
+	responseBytes = nil
+
+	bAddr := []byte(strconv.Itoa(((addr << 1) & 0x7E)))
+	outBuf = append(outBuf, bAddr[:]...)
+	err := c.spiDevice.Transfer(outBuf)
+	if err == nil {
+		responseBytes = outBuf
 	}
 	return responseBytes[1], err
 }
