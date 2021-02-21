@@ -8,16 +8,15 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/ecc1/spi"
-	"github.com/warthog618/gpiod"
+	rpio "github.com/stianeikeland/go-rpio/v4"
 )
 
 //Card -
 type Card struct {
-	spiDevice     *spi.Device
+	// spiDevice     *spi.Device
 	speed         int
 	spiDeviceAddr string
-	chip          *gpiod.Chip
+	// chip          *gpiod.Chip
 }
 
 //CardReaderIO - Interface for Scanner
@@ -39,21 +38,26 @@ func NewCardScanner(spiDeviceAddr string, speed int) CardReaderIO {
 
 //Capture -
 func (c *Card) Capture() error {
-	err := error(nil)
-	c.spiDevice, err = spi.Open(c.spiDeviceAddr, c.speed, 0)
-	if err != nil {
-		log.Printf(err.Error())
-		return err
+
+	if err := rpio.Open(); err != nil {
+		panic(err)
 	}
+
+	if err := rpio.SpiBegin(rpio.Spi0); err != nil {
+		panic(err)
+	}
+
+	rpio.SpiChipSelect(0) // Select CE0 slave
+
+	c.init()
 	return nil
 }
 
 func (c *Card) init() {
 
-	c.chip, _ = gpiod.NewChip("gpiochip0", gpiod.WithConsumer("softwire"))
-	c.chip.RequestLine(NRSTPD, gpiod.AsOutput(1))
-	// val, _ := in.Value()
-	// out, _ := c.RequestLine(3, gpiod.AsOutput(val))
+	pin := rpio.Pin(NRSTPD)
+	pin.Mode(rpio.Output) // Alternative syntax
+	pin.Write(rpio.High)  // Alternative syntax
 
 	// GPIO.setmode(GPIO.BOARD)
 	// GPIO.setup(self.NRSTPD, GPIO.OUT)
@@ -78,9 +82,8 @@ func (c *Card) DeviceReset() {
 
 //Release -
 func (c *Card) Release() {
-	var outBuf []byte
-	outBuf = append(outBuf, 0)
-	c.spiDevice.Write(outBuf)
+	rpio.SpiEnd(rpio.Spi0)
+	rpio.Close()
 }
 
 //VerifyPassword -
@@ -98,22 +101,20 @@ func (c *Card) Flash(data []byte) error {
 	return nil
 }
 
-func (c *Card) writeToDevice(addr int, val int) (responseBytes []byte, err error) {
+func (c *Card) writeToDevice(addr int, val int) ([]byte, error) {
 	var outBuf []byte
-
+	var responseBytes []byte
 	log.Println("Addr:(", addr, ")   val:(", val, ")")
 
-	responseBytes = nil
+	// outBuf = make([]byte, 5)
 
 	bAddr := []byte(strconv.Itoa(((addr << 1) & 0x7E)))
 	bVal := []byte(strconv.Itoa(val))
 	outBuf = append(outBuf, bAddr[:]...)
 	outBuf = append(outBuf, bVal[:]...)
-	err = c.spiDevice.Transfer(outBuf)
-	if err == nil {
-		responseBytes = outBuf
-	}
-	return responseBytes, err
+	rpio.SpiExchange(outBuf)
+	responseBytes = outBuf
+	return responseBytes, nil
 }
 
 func (c *Card) setBitMask(reg int, mask int) {
@@ -145,11 +146,10 @@ func (c *Card) readFromDevice(addr int) (byte, error) {
 
 	bAddr := []byte(strconv.Itoa(((addr << 1) & 0x7E)))
 	outBuf = append(outBuf, bAddr[:]...)
-	err := c.spiDevice.Transfer(outBuf)
-	if err == nil {
-		responseBytes = outBuf
-	}
-	return responseBytes[1], err
+	//err := c.spiDevice.Read(outBuf) //Transfer(outBuf)
+	rpio.SpiExchange(outBuf)
+	responseBytes = outBuf
+	return responseBytes[1], nil
 }
 
 //AntennaOn -
