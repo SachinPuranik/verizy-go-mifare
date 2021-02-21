@@ -1,9 +1,6 @@
 package cardscanner
 
 import (
-	//"github.com/warthog618/gpiod"
-	//"github.com/ecc1/spi"
-
 	"errors"
 	"log"
 	"strconv"
@@ -13,10 +10,8 @@ import (
 
 //Card -
 type Card struct {
-	// spiDevice     *spi.Device
 	speed         int
 	spiDeviceAddr string
-	// chip          *gpiod.Chip
 }
 
 //CardReaderIO - Interface for Scanner
@@ -58,6 +53,11 @@ func (c *Card) init() {
 	pin := rpio.Pin(NRSTPD)
 	pin.Mode(rpio.Output) // Alternative syntax
 	pin.Write(rpio.High)  // Alternative syntax
+
+	rpio.SpiSpeed(1000000)
+	rpio.SpiChipSelect(0)
+	cpol, cpha := uint8(0), uint8(0)
+	rpio.SpiMode(cpol, cpha)
 
 	// GPIO.setmode(GPIO.BOARD)
 	// GPIO.setup(self.NRSTPD, GPIO.OUT)
@@ -104,14 +104,17 @@ func (c *Card) Flash(data []byte) error {
 func (c *Card) writeToDevice(addr int, val int) ([]byte, error) {
 	var outBuf []byte
 	var responseBytes []byte
-	log.Println("Addr:(", addr, ")   val:(", val, ")")
+	log.Println("Write Addr:(", addr, ")   val:(", val, ")")
 
-	// outBuf = make([]byte, 5)
+	outBuf = make([]byte, 5)
 
 	bAddr := []byte(strconv.Itoa(((addr << 1) & 0x7E)))
 	bVal := []byte(strconv.Itoa(val))
-	outBuf = append(outBuf, bAddr[:]...)
-	outBuf = append(outBuf, bVal[:]...)
+
+	outBuf[0] = bAddr[0]
+	outBuf[1] = bVal[0]
+	// outBuf = append(outBuf, bAddr[:]...)
+	// outBuf = append(outBuf, bVal[:]...)
 	rpio.SpiExchange(outBuf)
 	responseBytes = outBuf
 	return responseBytes, nil
@@ -127,35 +130,32 @@ func (c *Card) clearBitMask(reg int, mask int) {
 	c.writeToDevice(reg, int(tmp)&(^mask))
 }
 
-// func (c *Card) readFromDevice(addr int) (byte, error) {
-// 	log.Println("Addr:(", addr, ")   val:(", 0, ")")
-// 	responseBytes, err := c.writeToDevice(addr, 0)
-// 	if err != nil {
-// 		log.Println("readFromDevice :", err.Error())
-// 	}
-// 	return responseBytes[1], err
-// }
-
 func (c *Card) readFromDevice(addr int) (byte, error) {
 	var outBuf []byte
 	var responseBytes []byte
 
-	log.Println("Addr:(", addr, ")   val:(0)")
+	log.Println("Read Addr:(", addr, ")   val:(0)")
+
+	outBuf = make([]byte, 5)
 
 	responseBytes = nil
 
-	bAddr := []byte(strconv.Itoa(((addr << 1) & 0x7E)))
-	outBuf = append(outBuf, bAddr[:]...)
-	//err := c.spiDevice.Read(outBuf) //Transfer(outBuf)
+	bAddr := []byte(strconv.Itoa(((addr << 1) & 0x7E) | 0x80))
+
+	outBuf[0] = bAddr[0]
+	outBuf[1] = 0
+	//outBuf = append(outBuf, bAddr[:]...)
+
 	rpio.SpiExchange(outBuf)
 	responseBytes = outBuf
+	log.Println("Output data:(", responseBytes[1], ")")
 	return responseBytes[1], nil
 }
 
 //AntennaOn -
 func (c *Card) AntennaOn() {
 	temp, _ := c.readFromDevice(TxControlReg)
-	if (temp & 0x03) == 0x00 {
+	if ^(temp & 0x03) > 0 {
 		c.setBitMask(TxControlReg, 0x03)
 	}
 }
@@ -216,7 +216,7 @@ func (c *Card) writeCommandToCard(command int, sendData []byte) (responseData []
 		//C2 - Break when last bit of n is 1 - evaulate expr false - hence false ==false break
 		//C3 - Break when 5th or 6th bit are 1 - evaulate expr false - hence false ==false break
 		if ((i != 0) && (int(n)&0x01) <= 0 && (int(n)&waitIRq) <= 0) == false {
-			log.Println("WIll break loop")
+			log.Println("Will break loop")
 			break
 		}
 	}
@@ -298,3 +298,5 @@ func (c *Card) ReadWithAnticoll() (uid string, err error) {
 
 	return "nil", nil
 }
+
+//24,26,23,19,21

@@ -1,0 +1,51 @@
+2021/02/21 04:35:26 Write Addr:( 1 )   val:( 15 )
+2021/02/21 04:35:26 Write Addr:( 42 )   val:( 141 )
+2021/02/21 04:35:26 Write Addr:( 43 )   val:( 62 )
+2021/02/21 04:35:26 Write Addr:( 45 )   val:( 30 )
+2021/02/21 04:35:26 Write Addr:( 44 )   val:( 0 )
+2021/02/21 04:35:26 Write Addr:( 21 )   val:( 64 )
+2021/02/21 04:35:26 Write Addr:( 17 )   val:( 61 )
+2021/02/21 04:35:26 Read Addr:( 20 )   val:(0)
+2021/02/21 04:35:26 Read Byte Val:( 25 )
+2021/02/21 04:35:26 Read Addr:( 20 )   val:(0)
+2021/02/21 04:35:26 Read Byte Val:( 25 )
+2021/02/21 04:35:26 Write Addr:( 20 )   val:( 27 )
+Choose your option:
+1 - Verify Password
+2 - Scan Card
+3 - Flash Card
+9 - Exit
+2
+2021/02/21 04:35:28 Starting card read
+2021/02/21 04:35:28 Write Addr:( 13 )   val:( 7 )
+2021/02/21 04:35:28 Write Addr:( 2 )   val:( 247 )
+2021/02/21 04:35:28 Read Addr:( 4 )   val:(0)
+2021/02/21 04:35:28 Read Byte Val:( 25 )
+2021/02/21 04:35:28 Write Addr:( 4 )   val:( 25 )
+2021/02/21 04:35:28 Read Addr:( 10 )   val:(0)
+2021/02/21 04:35:28 Read Byte Val:( 25 )
+2021/02/21 04:35:28 Write Addr:( 10 )   val:( 153 )
+2021/02/21 04:35:28 Write Addr:( 1 )   val:( 0 )
+2021/02/21 04:35:28 sendData Len : 1
+2021/02/21 04:35:28 Sending byte : 38
+2021/02/21 04:35:28 Write Addr:( 9 )   val:( 38 )
+2021/02/21 04:35:28 Write Addr:( 1 )   val:( 12 )
+2021/02/21 04:35:28 Read Addr:( 13 )   val:(0)
+2021/02/21 04:35:28 Read Byte Val:( 25 )
+2021/02/21 04:35:28 Write Addr:( 13 )   val:( 153 )
+2021/02/21 04:35:28 Read Addr:( 4 )   val:(0)
+2021/02/21 04:35:28 Read Byte Val:( 25 )
+2021/02/21 04:35:28 read Byte :  25
+2021/02/21 04:35:28 WIll break loop
+2021/02/21 04:35:28 Read Addr:( 13 )   val:(0)
+2021/02/21 04:35:28 Read Byte Val:( 25 )
+2021/02/21 04:35:28 Write Addr:( 13 )   val:( 25 )
+2021/02/21 04:35:28 Read Addr:( 6 )   val:(0)
+2021/02/21 04:35:28 Read Byte Val:( 25 )
+2021/02/21 04:35:28 Card RequestMode error : Some error
+2021/02/21 04:35:28 Card ID :  Nothing
+Choose your option:
+1 - Verify Password
+2 - Scan Card
+3 - Flash Card
+9 - Exit
