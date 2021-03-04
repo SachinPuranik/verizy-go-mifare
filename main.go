@@ -1,25 +1,24 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 
-	//"github.com/SachinPuranik/verizy-go-mifare/cardscanner"
-	"github.com/SachinPuranik/verizy-go-mifare/cardscanner"
+	// "github.com/periph/conn/spi/spireg"
+	// "github.com/periph/devices/mfrc522"
+	// "github.com/periph/host"
+	// "github.com/periph/host/rpi"
+	"github.com/periph/conn/spi/spireg"
+	"github.com/periph/devices/mfrc522"
+	"github.com/periph/host"
+	"github.com/periph/host/rpi"
 )
 
 func main() {
 	var breakMe bool
 	var choice int
-
-	scanner := cardscanner.NewCardScanner("/dev/spidev0.0", 0x0000)
-
-	err := scanner.Capture()
-	if err != nil {
-		log.Fatal("Wow...Cant't handel err =>", err.Error())
-	}
-
-	defer scanner.Release()
 
 	for breakMe == false {
 		fmt.Println("Choose your option:")
@@ -31,28 +30,17 @@ func main() {
 		switch fmt.Scan(&choice); choice {
 		//switch choice {
 		case 1:
-			if scanner.VerifyPassword() == true {
-				log.Println("Password verified")
-			} else {
-				log.Println("Password wrong")
-			}
+
 
 		case 2:
-			id, err := Search(scanner)
-			if err != nil {
-				log.Println("Error reading card")
-			} else {
-				log.Println("Card ID : ", id)
-			}
+			Search()
+			// if err != nil {
+			// 	log.Println("Error reading card")
+			// } else {
+			// 	log.Println("Card ID : ", id)
+			// }
 		case 3:
 			//Place holder for Enroll Function
-			writeBuf := []byte("This is test")
-			err := scanner.Flash(writeBuf)
-			if err != nil {
-				log.Println("Error writing card")
-			} else {
-				log.Println("Wrote :", string(writeBuf))
-			}
 
 		case 9:
 			breakMe = true
@@ -66,36 +54,74 @@ func main() {
 
 }
 
-//Search -
-func Search(scanner cardscanner.CardReaderIO) (string, error) {
-
-	var continueRead bool
-	continueRead = true
-
-	for continueRead == true {
-		log.Println("Starting card read")
-		_, err := scanner.RequestMode(cardscanner.PICC_REQIDL)
-
-		if err == nil {
-			log.Println("Card detected")
-			continueRead = false
-		} else {
-			log.Println("Card RequestMode error :", err.Error())
-		}
-		continueRead = false
-		// // Get the UID of the card with anti collision
-		// uid = ""
-		// uid , err := cardscanner.ReadWithAnticoll()
-		// if(err == nil){
-		// 	scanner.SelectTag(ui)
-		//	err := scanner.AuthanticateTag(ui)
-		// if err == nil{
-		//     scanner.Read(8)
-		//     scanner.StopCrypto1()
-		// } else{}
-		//     log.Println("Authentication error")
-		// }
+func Search() {
+	// Make sure periph is initialized.
+	if _, err := host.Init(); err != nil {
+		log.Fatal(err)
 	}
 
-	return "Nothing", nil
+	// Using SPI as an example. See package "periph.io/x/conn/v3/spi/spireg" for more details.
+	p, err := spireg.Open("")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer p.Close()
+
+	rfid, err := mfrc522.NewSPI(p, rpi.P1_22, rpi.P1_18)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Idling device on exit.
+	defer rfid.Halt()
+
+	// Setting the antenna signal strength.
+	rfid.SetAntennaGain(5)
+
+	timedOut := false
+	cb := make(chan []byte)
+	timer := time.NewTimer(10 * time.Second)
+
+	// Stopping timer, flagging reader thread as timed out
+	defer func() {
+		timer.Stop()
+		timedOut = true
+		close(cb)
+	}()
+
+	go func() {
+		log.Printf("Started %s", rfid.String())
+
+		for {
+			// Trying to read card UID.
+			uid, err := rfid.ReadUID(10 * time.Second)
+
+			// If main thread timed out just exiting.
+			if timedOut {
+				return
+			}
+
+			// Some devices tend to send wrong data while RFID chip is already detected
+			// but still "too far" from a receiver.
+			// Especially some cheap CN clones which you can find on GearBest, AliExpress, etc.
+			// This will suppress such errors.
+			if err != nil {
+				continue
+			}
+
+			cb <- uid
+			return
+		}
+	}()
+
+	for {
+		select {
+		case <-timer.C:
+			log.Fatal("Didn't receive device data")
+			return
+		case data := <-cb:
+			log.Println("UID:", hex.EncodeToString(data))
+			return
+		}
+	}
 }
