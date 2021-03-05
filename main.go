@@ -37,7 +37,7 @@ func main() {
 	}
 	defer p.Close()
 
-	rfid, err = mfrc522.NewSPI(p, rpi.P1_13, rpi.P1_18)
+	rfid, err = mfrc522.NewSPI(p, rpi.P1_22, rpi.P1_18)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,6 +128,15 @@ func write() {
 	hexKey, _ := hex.DecodeString("030e0f5c4123")
 	var key [6]byte
 	copy(key[:], hexKey)
+
+	data, err := rfid.ReadAuth(10*time.Second, byte(commands.PICC_AUTHENT1B), 1, key)
+
+	if err != nil {
+		log.Println("getting kills as auth reading failed")
+		log.Panicln(err.Error())
+	} else {
+		log.Println("Auth Key :", data)
+	}
 
 	// Converting expected data.
 	// This value corresponds to string "@~>f=Um[X{LRwA3}".
