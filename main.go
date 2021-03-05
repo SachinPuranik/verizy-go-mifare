@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/periph/conn/spi"
 	"github.com/periph/devices/mfrc522/commands"
 	"periph.io/x/conn/spi/spireg"
 	"periph.io/x/devices/mfrc522"
@@ -17,7 +16,6 @@ import (
 
 var (
 	rfid *mfrc522.Dev
-	p    spi.PortCloser
 )
 
 func main() {
@@ -33,8 +31,8 @@ func main() {
 	}
 
 	// Using SPI as an example. See package "periph.io/x/conn/v3/spi/spireg" for more details.
-	p, err = spireg.Open("/dev/spidev0.0")
-	if err != nil {
+	p, errOpen := spireg.Open("/dev/spidev0.0")
+	if errOpen != nil {
 		log.Fatal(err)
 	}
 	defer p.Close()
